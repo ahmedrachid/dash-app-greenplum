@@ -2,7 +2,7 @@
 
 ## About this app
 
-This Dash app queries a Greenplum database every second and uses the data to update the wind speed diagram and the wind direction diagram. 
+This Dash app queries a [Greenplum data-warehouse](https://www.vmware.com/products/greenplum.html) every second and uses the data to update the wind speed diagram and the wind direction diagram. 
 The wind speed values are then binned in real time to generate the wind histogram plot.
 
 ## How to run this app
