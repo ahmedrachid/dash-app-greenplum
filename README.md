@@ -1,4 +1,4 @@
-# Dash App - Greenplum Data Warehouse
+# Beyond BI: Data Analytics with Greenplum and Dash
 
 ## About this app
 
