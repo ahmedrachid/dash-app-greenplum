@@ -3,10 +3,10 @@ import greenplumpython as gp
 
 
 db = gp.database(
-        host="35.241.130.38",
+        host="",
         dbname="dev",
         user="gpadmin",
-        password="79kq97lCaWrFn",
+        password="",
     )
 
 def get_wind_data(start, end):
