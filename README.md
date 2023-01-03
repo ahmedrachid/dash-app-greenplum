@@ -23,4 +23,4 @@ Open a browser at http://127.0.0.1:8050
 
 ![screenshot_dash_app.png](screenshot_dash_app.png)
 
-### Original source-code: https://github.com/plotly/dash-sample-apps
+Original source-code: https://github.com/plotly/dash-sample-apps
