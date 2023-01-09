@@ -5,14 +5,15 @@ import datetime as dt
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+from datetime import datetime
 
 from dash.exceptions import PreventUpdate
 from dash.dependencies import Input, Output, State
 from scipy.stats import rayleigh
-from db.api import get_wind_data, get_wind_data_by_id
+from db.api import get_wind_data, get_wind_data_by_id, get_data_count
 
 
-GRAPH_INTERVAL = os.environ.get("GRAPH_INTERVAL", 5000)
+GRAPH_INTERVAL = 1000
 
 app = dash.Dash(
     __name__,
@@ -33,7 +34,7 @@ app.layout = html.Div(
                     [
                         html.H4("WIND SPEED STREAMING", className="app__header__title"),
                         html.P(
-                            "This app continually queries Greenplum database and displays live charts of wind speed and wind direction. It shows benefits from of using Greenplum-Python package as an API to query large data.",
+                            "This app continually queries Greenplum database and displays live charts of wind speed and wind direction. It shows benefits from of using VMware Greenplum as a Data Warehouse for Real-time and Big data.",
                             className="app__header__title--grey",
                         ),
                     ],
@@ -74,7 +75,9 @@ app.layout = html.Div(
                 html.Div(
                     [
                         html.Div(
-                            [html.H6("WIND SPEED (MPH)", className="graph__title")]
+                            [html.P(className='graph__title', id = 'row_count_wind'),
+                                html.H6("WIND SPEED (MPH)", className="graph__title"),
+                             ]
                         ),
                         dcc.Graph(
                             id="wind-speed",
@@ -191,11 +194,15 @@ app.layout = html.Div(
 def get_current_time():
     """ Helper function to get the current time in seconds. """
 
-    now = dt.datetime.now()
-    total_time = (now.hour * 3600) + (now.minute * 60) + (now.second)
+    total_time = int(round(datetime.now().timestamp()))
     return total_time
 
 
+@app.callback(
+    Output("row_count_wind", "children"), [Input("wind-speed-update", "n_intervals")]
+)
+def get_row_count(interval):
+    return "Greenplum table row count: " + str(get_data_count().values[0][0]) +  " records"
 @app.callback(
     Output("wind-speed", "figure"), [Input("wind-speed-update", "n_intervals")]
 )
@@ -207,17 +214,15 @@ def gen_wind_speed(interval):
     """
 
     total_time = get_current_time()
-    print(total_time)
     df = get_wind_data(total_time - 200, total_time)
-    print(df)
     trace = dict(
         type="scatter",
-        y=df["Speed"],
+        y=df["speed"],
         line={"color": "#42C4F7"},
         hoverinfo="skip",
         error_y={
             "type": "data",
-            "array": df["SpeedError"],
+            "array": df["speederror"],
             "thickness": 1.5,
             "width": 2,
             "color": "#B4E8FC",
@@ -241,15 +246,15 @@ def gen_wind_speed(interval):
         },
         yaxis={
             "range": [
-                min(0, min(df["Speed"])),
-                max(45, max(df["Speed"]) + max(df["SpeedError"])),
+                min(0, min(df["speed"])),
+                max(45, max(df["speed"]) + max(df["speederror"])),
             ],
             "showgrid": True,
             "showline": True,
             "fixedrange": True,
             "zeroline": False,
             "gridcolor": app_color["graph_line"],
-            "nticks": max(6, round(df["Speed"].iloc[-1] / 10)),
+            "nticks": max(6, round(df["speed"].iloc[-1] / 10)),
         },
     )
 
@@ -267,9 +272,9 @@ def gen_wind_direction(interval):
     """
 
     total_time = get_current_time()
-    df = get_wind_data_by_id(total_time)
-    val = df["Speed"].iloc[-1]
-    direction = [0, (df["Direction"][0] - 20), (df["Direction"][0] + 20), 0]
+    df = get_wind_data_by_id(total_time-10)
+    val = df["speed"].iloc[-1]
+    direction = [0, (df["direction"][0] - 20), (df["direction"][0] + 20), 0]
 
     traces_scatterpolar = [
         {"r": [0, val, val, 0], "fillcolor": "#084E8A"},
@@ -477,4 +482,4 @@ def show_num_bins(autoValue, slider_value):
 
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(port='8051',debug=True)
